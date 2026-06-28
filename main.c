@@ -4,7 +4,9 @@
 int main() {
     record new_record;
     new_record.key = "new_key";
+    new_record.key_len = 8;
     new_record.value = "new_value";
+    new_record.value_len = 10;
 
     int res;
     res = write_record(new_record);
