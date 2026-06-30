@@ -1,9 +1,13 @@
 #include "record.h"
+#include <stdio.h>
 
 int write_record(record r);
 int read_record(record* buf);
+char* file_name = "test_name_0001";
 
 int write_record(record r) {
+    FILE* file = fopen(file_name, "a");
+    
     return 0;
 }
 
