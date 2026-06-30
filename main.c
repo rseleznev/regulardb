@@ -1,5 +1,5 @@
 #include "record.h"
-#include "stdio.h"
+#include <stdio.h>
 
 int main() {
     record new_record;
