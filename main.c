@@ -1,10 +1,40 @@
 #include "table.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main() {
+    TableInfo* table_info = malloc(sizeof(TableInfo) + sizeof(TableColomn)*1);
+    if (table_info == NULL) {
+        printf("ошибка выделения памяти \n");
+        return 1;
+    }
+
+    table_info->name = strdup("test_table");
+    table_info->file_name = strdup("test_table.rdb");
+    table_info->record_len = 64;
+    table_info->pages_count = 1;
+
+    table_info->colomns[0].name = strdup("test_key");
+    table_info->colomns[0].type = strdup("string");
+    table_info->colomns[0].len = 64;
+
+    int res = create_table_info(table_info);
+    if (res != 0) {
+        printf("ошибка создания инфо таблицы \n");
+        return 1;
+    }
+    printf("инфо таблица создана \n");
+
+    free(table_info->colomns[0].name);
+    free(table_info->colomns[0].type);
+
+    free(table_info->name);
+    free(table_info->file_name);
+    
     char* path = "tables/test_table.rdb";
     
-    int res = create_table(path);
+    res = create_table(path);
     if (res != 0) {
         printf("ошибка создания таблицы \n");
         return 1;
