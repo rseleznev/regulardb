@@ -4,6 +4,7 @@
 #define TABLE_PAGE_LEN 1024
 
 int create_table_info(TableInfo* table_info);
+int get_table_info(char* buf);
 int create_table(char* path);
 int append_table(char* path, char* data);
 int get_table_page(char* path, int page_num, char* buf);
@@ -11,16 +12,31 @@ int get_table_page(char* path, int page_num, char* buf);
 int create_table_info(TableInfo* table_info) {
     FILE* catalog = fopen("db/catalog.rdb", "a");
     if (catalog == NULL) {
-        printf("create_table_info: failed to open table info \n");
+        printf("create_table_info: failed to open catalog file \n");
         return -1;
     }
     int n = fwrite(table_info, sizeof(*table_info), 1, catalog);
     if (n <= 0) {
-        printf("create_table_info: failed to write table info \n");
+        printf("create_table_info: failed to write catalog file \n");
         return -1;
     }
     printf("create_table_info: table info written \n");
     fclose(catalog);
+    
+    return 0;
+}
+
+int get_table_info(char* buf) {
+    FILE* catalog = fopen("db/catalog.rdb", "r");
+    if (catalog == NULL) {
+        printf("get_table_info: failed to open catalog file \n");
+        return -1;
+    }
+    size_t n = fread(buf, sizeof(buf), 1, catalog);
+     if (n <= 0) {
+        printf("get_table_info: no read bytes \n");
+        return -1;
+    }
     
     return 0;
 }
@@ -46,7 +62,7 @@ int append_table(char* path, char* data) {
         return -1;
     }
     size_t n = fwrite(data, sizeof(data), 1, table);
-    if (n == 0) {
+    if (n <= 0) {
         printf("append_table: no written bytes \n");
         return -1;
     }
@@ -64,7 +80,7 @@ int get_table_page(char* path, int page_num, char* buf) {
         return -1;
     }
     size_t n = fread(buf, sizeof(buf), 1, table);
-    if (n == 0) {
+    if (n <= 0) {
         printf("get_table_page: no read bytes \n");
         return -1;
     }

@@ -31,30 +31,38 @@ int main() {
 
     free(table_info->name);
     free(table_info->file_name);
-    
-    char* path = "tables/test_table.rdb";
-    
-    res = create_table(path);
-    if (res != 0) {
-        printf("ошибка создания таблицы \n");
-        return 1;
-    }
-    printf("таблица создана \n");
-
-    res = append_table(path, "test_data");
-    if (res != 0) {
-        printf("ошибка записи в таблицу \n");
-        return 1;
-    }
-    printf("запись в таблицу успешна \n");
 
     char buf[1024];
-    res = get_table_page(path, 1, buf);
+    res = get_table_info(buf);
     if (res != 0) {
-        printf("ошибка чтения из таблицы \n");
+        printf("ошибка получения инфо таблицы \n");
         return 1;
     }
-    printf("таблица прочитана: %s \n", buf);
+    printf("инфо таблица получена: %s \n", buf);
+    
+    // char* path = "tables/test_table.rdb";
+    
+    // res = create_table(path);
+    // if (res != 0) {
+    //     printf("ошибка создания таблицы \n");
+    //     return 1;
+    // }
+    // printf("таблица создана \n");
+
+    // res = append_table(path, "test_data");
+    // if (res != 0) {
+    //     printf("ошибка записи в таблицу \n");
+    //     return 1;
+    // }
+    // printf("запись в таблицу успешна \n");
+
+    // char buf[1024];
+    // res = get_table_page(path, 1, buf);
+    // if (res != 0) {
+    //     printf("ошибка чтения из таблицы \n");
+    //     return 1;
+    // }
+    // printf("таблица прочитана: %s \n", buf);
 
     return 0;
 }
