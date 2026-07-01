@@ -45,7 +45,12 @@ int get_table_page(char* path, int page_num, char* buf) {
         printf("get_table_page: fail to open table file \n");
         return 1;
     }
-
+    size_t n = fread(buf, sizeof(buf), 1, table);
+    if (n == 0) {
+        printf("get_table_page: no read bytes \n");
+        return 1;
+    }
+    printf("get_table_page: table file read \n");
     fclose(table);
 
     return 0;
