@@ -7,14 +7,14 @@ int main() {
     int res = create_table(path);
     if (res != 0) {
         printf("ошибка создания таблицы \n");
-        return 0;
+        return 1;
     }
     printf("таблица создана \n");
 
     res = append_table(path, "test_data");
     if (res != 0) {
         printf("ошибка записи в таблицу \n");
-        return 0;
+        return 1;
     }
     printf("запись в таблицу успешна \n");
 
@@ -22,7 +22,7 @@ int main() {
     res = get_table_page(path, 1, buf);
     if (res != 0) {
         printf("ошибка чтения из таблицы \n");
-        return 0;
+        return 1;
     }
     printf("таблица прочитана: %s \n", buf);
 
