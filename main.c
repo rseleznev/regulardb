@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main() {
+int main(void) {
     TableInfo* table_info = malloc(sizeof(TableInfo) + sizeof(TableColomn)*1);
     if (table_info == NULL) {
         printf("ошибка выделения памяти \n");
