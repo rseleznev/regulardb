@@ -1,13 +1,13 @@
 #ifndef REGULARDB_CATALOG_H
 #define REGULARDB_CATALOG_H
 
-typedef struct {
+typedef struct TableColomn {
     char* name;
     char* type;
     unsigned int len;
 } TableColomn;
 
-typedef struct {
+typedef struct TableInfo {
     char* name;
     char* file_name;
     int record_len;
