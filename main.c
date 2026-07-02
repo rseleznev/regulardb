@@ -19,7 +19,7 @@ int main() {
     table_info->colomns[0].type = strdup("string");
     table_info->colomns[0].len = 64;
 
-    int res = create_table_info(table_info);
+    int res = append_catalog(table_info);
     if (res != 0) {
         printf("ошибка создания инфо таблицы \n");
         return 1;
@@ -34,7 +34,7 @@ int main() {
     free(table_info);
 
     char buf[1024];
-    res = get_table_info(buf);
+    res = get_catalog(buf);
     if (res != 0) {
         printf("ошибка получения инфо таблицы \n");
         return 1;

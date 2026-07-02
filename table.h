@@ -15,8 +15,9 @@ typedef struct {
     TableColomn colomns[];
 } TableInfo;
 
-int create_table_info(TableInfo* table_info);
-int get_table_info(char* buf);
+int create_catalog(void);
+int append_catalog(TableInfo* table_info);
+int get_catalog(char* buf);
 int create_table(char* path);
 int append_table(char* path, char* data);
 int get_table_page(char* path, int page_num, char* buf);
