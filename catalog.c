@@ -3,7 +3,7 @@
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
-int get_catalog(char* buf);
+int get_catalog(TableInfo* buf);
 
 // create_catalog создает каталог таблиц со всей информацией о них
 int create_catalog(void) {
@@ -25,7 +25,19 @@ int append_catalog(TableInfo* table_info) {
         printf("append_catalog: failed to open catalog file \n");
         return -1;
     }
-    int n = fwrite(table_info, sizeof(*table_info), 1, catalog);
+    // int n = fwrite(table_info, sizeof(*table_info), 1, catalog);
+    // if (n <= 0) {
+    //     printf("append_catalog: failed to write catalog file \n");
+    //     return -1;
+    // }
+    int n = fprintf(catalog, "%s %s %d %s %s %d\n", 
+        table_info->name,
+        table_info->file_name,
+        table_info->columns_count,
+        table_info->columns[0].name,
+        table_info->columns[0].type,
+        table_info->columns[0].len
+    );
     if (n <= 0) {
         printf("append_catalog: failed to write catalog file \n");
         return -1;
@@ -37,15 +49,27 @@ int append_catalog(TableInfo* table_info) {
 }
 
 // get_catalog возвращает весь каталог таблиц
-int get_catalog(char* buf) {
+int get_catalog(TableInfo* buf) {
     FILE* catalog = fopen("db/catalog.rdb", "r");
     if (catalog == NULL) {
         printf("get_catalog: failed to open catalog file \n");
         return -1;
     }
-    size_t n = fread(buf, sizeof(buf), 1, catalog);
-     if (n <= 0) {
-        printf("get_catalog: no read bytes \n");
+    // size_t n = fread(buf, sizeof(buf), 1, catalog);
+    //  if (n <= 0) {
+    //     printf("get_catalog: no read bytes \n");
+    //     return -1;
+    // }
+    int n = fscanf(catalog, "%s %s %d %s %s %d\n",
+        buf->name,
+        buf->file_name,
+        &buf->columns_count,
+        buf->columns[0].name,
+        buf->columns[0].type,
+        &buf->columns[0].len
+    );
+    if (n <= 0) {
+        printf("get_catalog: failed to read catalog file \n");
         return -1;
     }
     

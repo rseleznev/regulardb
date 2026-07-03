@@ -16,6 +16,6 @@ typedef struct TableInfo {
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
-int get_catalog(char* buf);
+int get_catalog(TableInfo* buf);
 
 #endif

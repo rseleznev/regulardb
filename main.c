@@ -4,6 +4,7 @@
 #include <string.h>
 
 int main(void) {
+    // создание каталога
     int res = create_catalog();
     if (res != 0) {
         return 1;
@@ -33,6 +34,20 @@ int main(void) {
     free(table_info->file_name);
 
     free(table_info);
+
+    // чтение каталога
+    TableInfo* buf;
+    res = get_catalog(buf);
+    if (res != 0) {
+        return 1;
+    }
+    printf("name: %s \n", buf->name);
+    printf("file_name: %s \n", buf->file_name);
+    printf("columns_count: %d \n", buf->columns_count);
+    printf("columns: \n");
+    printf("\t name: %s \n", buf->columns[0].name);
+    printf("\t type: %s \n", buf->columns[0].type);
+    printf("\t len: %d \n", buf->columns[0].len);
 
     return 0;
 }
