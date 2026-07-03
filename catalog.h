@@ -1,18 +1,17 @@
 #ifndef REGULARDB_CATALOG_H
 #define REGULARDB_CATALOG_H
 
-typedef struct TableColomn {
+typedef struct TableColumn {
     char* name;
     char* type;
     unsigned int len;
-} TableColomn;
+} TableColumn;
 
 typedef struct TableInfo {
     char* name;
     char* file_name;
-    int record_len;
-    int pages_count;
-    TableColomn colomns[];
+    int columns_count;
+    TableColumn columns[];
 } TableInfo;
 
 int create_catalog(void);

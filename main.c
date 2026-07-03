@@ -1,32 +1,38 @@
-#include "table.h"
+#include "catalog.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 int main(void) {
-    char* path = "db/tables/test_table.rdb";
-    
-    int res = create_table(path);
+    int res = create_catalog();
     if (res != 0) {
-        printf("ошибка создания таблицы \n");
         return 1;
     }
-    printf("таблица создана \n");
 
-    res = append_table(path, "test_data");
-    if (res != 0) {
-        printf("ошибка записи в таблицу \n");
+    TableInfo* table_info = malloc(sizeof(TableInfo) + sizeof(TableColumn)*1);
+    if (table_info == NULL) {
+        printf("ошибка выделения памяти для table_info \n");
         return 1;
     }
-    printf("запись в таблицу успешна \n");
+    table_info->name = strdup("test_table");
+    table_info->file_name = strdup("test_table.rdb");
+    table_info->columns_count = 1;
+    table_info->columns[0].name = strdup("event");
+    table_info->columns[0].type = strdup("integer");
+    table_info->columns[0].len = 8;
 
-    char buf[1024];
-    res = get_table_page(path, 1, buf);
+    res = append_catalog(table_info);
     if (res != 0) {
-        printf("ошибка чтения из таблицы \n");
         return 1;
     }
-    printf("таблица прочитана: %s \n", buf);
+
+    free(table_info->columns[0].name);
+    free(table_info->columns[0].type);
+
+    free(table_info->name);
+    free(table_info->file_name);
+
+    free(table_info);
 
     return 0;
 }
