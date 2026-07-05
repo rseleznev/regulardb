@@ -3,7 +3,7 @@
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
-int get_catalog(TableInfo* buf);
+int get_catalog(Catalog* catalog);
 
 // create_catalog создает каталог таблиц со всей информацией о них
 int create_catalog(void) {
@@ -20,28 +20,48 @@ int create_catalog(void) {
 
 // append_catalog добавляет в каталог таблиц информацию о новой таблице
 int append_catalog(TableInfo* table_info) {
-    FILE* catalog = fopen("db/catalog.rdb", "a");
+    FILE* catalog = fopen("db/catalog.rdb", "ab");
     if (catalog == NULL) {
         printf("append_catalog: failed to open catalog file \n");
         return -1;
     }
-    // int n = fwrite(table_info, sizeof(*table_info), 1, catalog);
-    // if (n <= 0) {
-    //     printf("append_catalog: failed to write catalog file \n");
-    //     return -1;
-    // }
-    int n = fprintf(catalog, "%s %s %d %s %s %d\n", 
-        table_info->name,
-        table_info->file_name,
-        table_info->columns_count,
-        table_info->columns[0].name,
-        table_info->columns[0].type,
-        table_info->columns[0].len
-    );
+    size_t n;
+
+    n = fwrite(table_info->name, sizeof(table_info->name), 1, catalog);
     if (n <= 0) {
-        printf("append_catalog: failed to write catalog file \n");
+        printf("append_catalog: failed to write table name \n");
         return -1;
     }
+    n = fwrite(table_info->file_name, sizeof(table_info->file_name), 1, catalog);
+    if (n <= 0) {
+        printf("append_catalog: failed to write table file_name \n");
+        return -1;
+    }
+    n = fwrite(&table_info->columns_len, sizeof(table_info->columns_len), 1, catalog);
+    if (n <= 0) {
+        printf("append_catalog: failed to write table columns_len \n");
+        return -1;
+    }
+
+    int i;
+    for (i = 0; i < table_info->columns_len; i++) {
+        n = fwrite(table_info->columns[i].name, sizeof(table_info->columns[i].name), 1, catalog);
+        if (n <= 0) {
+            printf("append_catalog: failed to write column name \n");
+            return -1;
+        }
+        n = fwrite(table_info->columns[i].type, sizeof(table_info->columns[i].type), 1, catalog);
+        if (n <= 0) {
+            printf("append_catalog: failed to write column type \n");
+            return -1;
+        }
+        n = fwrite(&table_info->columns[i].value_len, sizeof(table_info->columns[i].value_len), 1, catalog);
+        if (n <= 0) {
+            printf("append_catalog: failed to write column value_len \n");
+            return -1;
+        }
+    }
+
     printf("append_catalog: catalog file appended \n");
     fclose(catalog);
     
@@ -49,29 +69,24 @@ int append_catalog(TableInfo* table_info) {
 }
 
 // get_catalog возвращает весь каталог таблиц
-int get_catalog(TableInfo* buf) {
-    FILE* catalog = fopen("db/catalog.rdb", "r");
+int get_catalog(Catalog* cat_buf) {
+    FILE* catalog = fopen("db/catalog.rdb", "rb");
     if (catalog == NULL) {
         printf("get_catalog: failed to open catalog file \n");
         return -1;
     }
-    // size_t n = fread(buf, sizeof(buf), 1, catalog);
-    //  if (n <= 0) {
-    //     printf("get_catalog: no read bytes \n");
-    //     return -1;
-    // }
-    int n = fscanf(catalog, "%s %s %d %s %s %d\n",
-        buf->name,
-        buf->file_name,
-        &buf->columns_count,
-        buf->columns[0].name,
-        buf->columns[0].type,
-        &buf->columns[0].len
-    );
-    if (n <= 0) {
-        printf("get_catalog: failed to read catalog file \n");
+    unsigned char buf[1024];
+    size_t n = fread(buf, 1, 1024, catalog);
+     if (n <= 0) {
+        printf("get_catalog: no read bytes \n");
         return -1;
     }
-    
+
+    unsigned int columns_len;
+    columns_len = (buf[53] << 24) | (buf[52] << 16) | (buf[51] << 8) | buf[50];
+    printf("В таблице %d столбцов \n", columns_len);
+
+    cat_buf->tables_len = 1;
+
     return 0;
 }
