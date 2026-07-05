@@ -1,5 +1,6 @@
 #include "catalog.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
@@ -77,16 +78,62 @@ int get_catalog(Catalog* cat_buf) {
     }
     unsigned char buf[1024];
     size_t n = fread(buf, 1, 1024, catalog);
-     if (n <= 0) {
+    if (n <= 0) {
         printf("get_catalog: no read bytes \n");
         return -1;
     }
+    if (n < 108) {
+        printf("get_catalog: too short value \n");
+        return -1;
+    }
 
-    unsigned int columns_len;
-    columns_len = (buf[53] << 24) | (buf[52] << 16) | (buf[51] << 8) | buf[50];
-    printf("В таблице %d столбцов \n", columns_len);
+    int i;
+    for (i = 0; i < n; ) {
+        unsigned int table_columns_len;
+        table_columns_len = (buf[53] << 24) | (buf[52] << 16) | (buf[51] << 8) | buf[50];    
+        
+        TableInfo* table = malloc(sizeof(TableInfo) + sizeof(TableColumn)*table_columns_len);
+        if (table == NULL) {
+            printf("ошибка выделения памяти для table \n");
+            return -1;
+        }
 
-    cat_buf->tables_len = 1;
+        int j;
+        for (j = 0; j < 25; j++,i++) {
+            table->name[j] = buf[i];
+        }
+        for (j = 0; j < 25; j++,i++) {
+            table->file_name[j] = buf[i];
+        }
+        table->columns_len = table_columns_len;
+        i += 4;
+
+        int columns_filled = 0;
+        while (columns_filled < table_columns_len) {
+            for (j = 0; j < 25; j++,i++) {
+                table->columns[columns_filled].name[j] = buf[i];
+            }
+            for (j = 0; j < 25; j++,i++) {
+                table->columns[columns_filled].type[j] = buf[i];
+            }
+            unsigned int column_value_len;
+            column_value_len = (buf[i+3] << 24) | (buf[i+2] << 16) | (buf[i+1] << 8) | buf[i];
+            table->columns[columns_filled].value_len = column_value_len;
+            
+            columns_filled++;
+        }
+        i++;
+        cat_buf->tables_len++;
+
+        printf("Прочитанная таблица из каталога \n");
+        printf("Table name: %s \n", table->name);
+        printf("Table file name: %s \n", table->file_name);
+        printf("Table columns len: %d \n", table->columns_len);
+        printf("Table columns: \n");
+        printf("\t Column name: %s \n", table->columns[0].name);
+        printf("\t Column type: %s \n", table->columns[0].type);
+        printf("\t Column value len: %d \n", table->columns[0].value_len);
+    }
 
     return 0;
 }

@@ -17,7 +17,7 @@ int main(void) {
     }
     strcpy(table_info->name, "test_table");
     strcpy(table_info->file_name, "test_table");
-    table_info->columns_len = 4;
+    table_info->columns_len = 1;
     strcpy(table_info->columns[0].name, "event");
     strcpy(table_info->columns[0].type, "integer");
     table_info->columns[0].value_len = 8;
@@ -35,6 +35,7 @@ int main(void) {
     if (res != 0) {
         return 1;
     }
+    printf("Кол-во таблиц в каталоге: %d \n", catalog.tables_len);
 
     return 0;
 }
