@@ -1,10 +1,12 @@
 #include "catalog.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
 int get_catalog(Catalog* catalog);
+long get_file_len(FILE* f);
 
 // create_catalog создает каталог таблиц со всей информацией о них
 int create_catalog(void) {
@@ -87,57 +89,73 @@ int get_catalog(Catalog* cat_buf) {
         return -1;
     }
 
-    int i;
-    for (i = 0; i < n; i++) {
+    long file_size = get_file_len(catalog);
+    if (file_size <= 0) {
+        printf("get_catalog: too short file len \n");
+        return -1;
+    }
+
+    cat_buf = malloc((size_t)file_size);
+    if (cat_buf == NULL) {
+        printf("get_catalog: failed to cat_buf mem alloc \n");
+        return -1;
+    }
+
+    int i, t;
+    for (i = 0, t = 0; i < n; i++, t++) {
         unsigned int table_columns_len;
         table_columns_len = (buf[53] << 24) | (buf[52] << 16) | (buf[51] << 8) | buf[50];    
         
         TableInfo* table = malloc(sizeof(TableInfo) + sizeof(TableColumn)*table_columns_len);
         if (table == NULL) {
-            printf("ошибка выделения памяти для table \n");
+            printf("get_catalog: failed to table mem alloc \n");
             return -1;
         }
 
         int j;
         for (j = 0; j < 25; j++,i++) {
-            table->name[j] = buf[i];
+            // table->name[j] = buf[i];
+            cat_buf->tables[t].name[j] = buf[i];
         }
         for (j = 0; j < 25; j++,i++) {
-            table->file_name[j] = buf[i];
+            // table->file_name[j] = buf[i];
+            cat_buf->tables[t].name[j] = buf[i];
         }
-        table->columns_len = table_columns_len;
+        // table->columns_len = table_columns_len;
+        cat_buf->tables[t].columns_len = table_columns_len;
         i += 4;
 
         int columns_filled = 0;
         while (columns_filled < table_columns_len) {
             for (j = 0; j < 25; j++,i++) {
-                table->columns[columns_filled].name[j] = buf[i];
+                // table->columns[columns_filled].name[j] = buf[i];
+                cat_buf->tables[t].columns[columns_filled].name[j] = buf[i];
             }
             for (j = 0; j < 25; j++,i++) {
-                table->columns[columns_filled].type[j] = buf[i];
+                // table->columns[columns_filled].type[j] = buf[i];
+                cat_buf->tables[t].columns[columns_filled].type[j] = buf[i];
             }
             unsigned int column_value_len;
             column_value_len = (buf[i+3] << 24) | (buf[i+2] << 16) | (buf[i+1] << 8) | buf[i];
-            table->columns[columns_filled].value_len = column_value_len;
+            // table->columns[columns_filled].value_len = column_value_len;
+            cat_buf->tables[t].columns[columns_filled].value_len = column_value_len;
             
             columns_filled++;
             i += 4;
         }
         cat_buf->tables_len++;
-
-        printf("Прочитанная таблица из каталога \n");
-        printf("Table name: %s \n", table->name);
-        printf("Table file name: %s \n", table->file_name);
-        printf("Table columns len: %d \n", table->columns_len);
-        printf("Table columns: \n");
-        int k;
-        for (k = 0; k < table->columns_len; k++) {
-            printf("\t Column name: %s \n", table->columns[k].name);
-            printf("\t Column type: %s \n", table->columns[k].type);
-            printf("\t Column value len: %d \n", table->columns[k].value_len);
-            printf("\n");
-        }
     }
+    fclose(catalog);
 
     return 0;
+}
+
+long get_file_len(FILE* f) {
+    int fd = fileno(f);
+    struct stat st;
+    if (fstat(fd, &st) != 0) {
+        return -1;
+    }
+
+    return st.st_size;
 }
