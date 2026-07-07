@@ -33,12 +33,28 @@ int main(void) {
     free(table_info);
 
     // чтение каталога
-    Catalog catalog;
-    res = get_catalog(&catalog);
+    Catalog* catalog = malloc(sizeof(Catalog)); // разобраться с выделением памяти
+    res = get_catalog(catalog);
     if (res != 0) {
         return 1;
     }
-    printf("Кол-во таблиц в каталоге: %d \n", catalog.tables_len);
+
+    int n;
+    for (n = 0; n < catalog->tables_len; n++) {
+        printf("Прочитанная таблица из каталога \n");
+        printf("Table name: %s \n", catalog->tables[n].name);
+        printf("Table file name: %s \n", catalog->tables[n].file_name);
+        printf("Table columns len: %d \n", catalog->tables[n].columns_len);
+        printf("Table columns: \n");
+        int k;
+        for (k = 0; k < catalog->tables[n].columns_len; k++) {
+            printf("\t Column name: %s \n", catalog->tables[n].columns[k].name);
+            printf("\t Column type: %s \n", catalog->tables[n].columns[k].type);
+            printf("\t Column value len: %d \n", catalog->tables[n].columns[k].value_len);
+            printf("\n");
+        }
+        printf("\n");
+    }
 
     return 0;
 }
