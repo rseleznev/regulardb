@@ -88,7 +88,7 @@ int get_catalog(Catalog* cat_buf) {
     }
 
     int i;
-    for (i = 0; i < n; ) {
+    for (i = 0; i < n; i++) {
         unsigned int table_columns_len;
         table_columns_len = (buf[53] << 24) | (buf[52] << 16) | (buf[51] << 8) | buf[50];    
         
@@ -121,8 +121,8 @@ int get_catalog(Catalog* cat_buf) {
             table->columns[columns_filled].value_len = column_value_len;
             
             columns_filled++;
+            i += 4;
         }
-        i++;
         cat_buf->tables_len++;
 
         printf("Прочитанная таблица из каталога \n");
