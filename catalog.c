@@ -130,9 +130,13 @@ int get_catalog(Catalog* cat_buf) {
         printf("Table file name: %s \n", table->file_name);
         printf("Table columns len: %d \n", table->columns_len);
         printf("Table columns: \n");
-        printf("\t Column name: %s \n", table->columns[0].name);
-        printf("\t Column type: %s \n", table->columns[0].type);
-        printf("\t Column value len: %d \n", table->columns[0].value_len);
+        int k;
+        for (k = 0; k < table->columns_len; k++) {
+            printf("\t Column name: %s \n", table->columns[k].name);
+            printf("\t Column type: %s \n", table->columns[k].type);
+            printf("\t Column value len: %d \n", table->columns[k].value_len);
+            printf("\n");
+        }
     }
 
     return 0;
