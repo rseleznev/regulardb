@@ -21,6 +21,6 @@ typedef struct Catalog {
 
 int create_catalog(void);
 int append_catalog(TableInfo* table_info);
-int get_catalog(Catalog* catalog);
+Catalog* get_catalog(void);
 
 #endif

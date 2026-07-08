@@ -33,9 +33,8 @@ int main(void) {
     free(table_info);
 
     // чтение каталога
-    Catalog* catalog = malloc(sizeof(Catalog)); // разобраться с выделением памяти
-    res = get_catalog(catalog);
-    if (res != 0) {
+    Catalog* catalog = get_catalog();
+    if (catalog == NULL) {
         return 1;
     }
 
