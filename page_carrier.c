@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define FILE_HDR_LEN 0
+
 typedef enum {
     ERR_OPEN = -1,
     ERR_SEEK = -2,
@@ -30,7 +32,7 @@ Page* get_page(char* file_name, int page_num) {
     page->changed = false;
 
     long start_pos;
-    start_pos = page_num * PAGE_LEN - PAGE_LEN; // в будущем добавится смещение от заголовка файла
+    start_pos = FILE_HDR_LEN + page_num * PAGE_LEN - PAGE_LEN;
 
     int res = read_page(file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
@@ -90,7 +92,7 @@ void save_page(Page* page) {
     }
 
     long start_pos;
-    start_pos = page->page_num * PAGE_LEN - PAGE_LEN; // в будущем добавится смещение от заголовка файла
+    start_pos = FILE_HDR_LEN + page->page_num * PAGE_LEN - PAGE_LEN;
 
     int res = write_page(page->file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
