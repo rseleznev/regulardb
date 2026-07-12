@@ -15,12 +15,39 @@ typedef enum {
     ERR_WRITE = -7
 } ErrorCode;
 
+Page* new_page(char* file_name);
 Page* get_page(char* file_name, int page_num);
 int read_page(char* file_name, long start_pos, char buf[], size_t limit);
 int write_page(char* file_name, long start_pos, char data[], size_t data_len);
 void save_page(Page* page);
 long get_file_len(FILE* f);
 int count_pages(char* file_name);
+
+/* Логика работы со страницами:
+    Если в get_page запрашивается несуществующая страница, вернется ошибка.
+    Новую страницу сначала нужно создать через new_page, странице присваивается порядковый номер следующей страницы.
+    save_page сохраняет указанную страницу не глядя на ее номер, при этом, если это новая страница,
+    она будет записана в конец файла
+*/
+
+Page* new_page(char* file_name) {
+    Page* page = malloc(sizeof(Page));
+    if (page == NULL) {
+        printf("page_carrier: new_page mem alloc fail \n");
+        return NULL;
+    }
+    strcpy(page->file_name, file_name);
+    page->changed = false;
+
+    int pages_counted = count_pages(file_name);
+    if (pages_counted < 0) {
+        printf("page_carrier: new_page pages count fail \n");
+        return NULL;
+    }
+    page->page_num = pages_counted + 1;
+
+    return page;
+}
 
 Page* get_page(char* file_name, int page_num) {
     // сначала проверяем кеш
@@ -41,8 +68,10 @@ Page* get_page(char* file_name, int page_num) {
 
     int res = read_page(file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
-        /* Нужно подумать, как поступать в случае, когда указана несуществующая страница.
-        В том числе, когда номер желаемой страницы сильно больше текущей последней страницы */
+        /* Если страницы нет ни в кеше, ни на диске, ее сначала надо создать через new_page */
+        if (res == ERR_NO_SUCH_PAGE) {
+            return NULL;
+        }
         res = write_page(file_name, start_pos, page->data, PAGE_LEN);
         if (res != 0) {
             return NULL;
@@ -58,7 +87,7 @@ int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
         printf("page_carrier: read_page open file fail \n");
         return ERR_OPEN;
     }
-    if (get_file_len(f) < start_pos) {
+    if (get_file_len(f)-1 < start_pos) {
         printf("page_carrier: read_page start pos out of range \n");
         fclose(f);
         return ERR_NO_SUCH_PAGE;
@@ -91,11 +120,11 @@ int write_page(char* file_name, long start_pos, char data[], size_t data_len) {
         printf("page_carrier: write_page open file fail \n");
         return ERR_OPEN;
     }
-    if (get_file_len(f) < start_pos) {
-        printf("page_carrier: write_page start pos out of range \n");
-        fclose(f);
-        return ERR_NO_SUCH_PAGE;
-    }
+    // if (get_file_len(f)-1 < start_pos) {
+    //     printf("page_carrier: write_page start pos out of range \n");
+    //     fclose(f);
+    //     return ERR_NO_SUCH_PAGE;
+    // }
     if (fseek(f, start_pos, SEEK_SET) != 0) {
         printf("page_carrier: write_page fseek fail \n");
         fclose(f);

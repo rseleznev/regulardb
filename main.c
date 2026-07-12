@@ -5,8 +5,12 @@
 int main(void) {
     Page* page = get_page("db/tables/users.rdb", 1);
     if (page == NULL) {
-        return 1;
+        page = new_page("db/tables/users.rdb");
+        if (page == NULL) {
+            return 1;    
+        }
     }
+    printf("page num: %d \n", page->page_num);
 
     int i;
     for (i = 0; i < 100; i++) {
