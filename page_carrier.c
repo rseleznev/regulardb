@@ -2,21 +2,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define FILE_HDR_LEN 0
 
 typedef enum {
-    ERR_OPEN = -1,
-    ERR_SEEK = -2,
-    ERR_EOF = -3,
-    ERR_READ = -4,
-    ERR_WRITE = -5
+    ERR_OPEN = -2,
+    ERR_NO_SUCH_PAGE = -3,
+    ERR_SEEK = -4,
+    ERR_EOF = -5,
+    ERR_READ = -6,
+    ERR_WRITE = -7
 } ErrorCode;
 
 Page* get_page(char* file_name, int page_num);
 int read_page(char* file_name, long start_pos, char buf[], size_t limit);
 int write_page(char* file_name, long start_pos, char data[], size_t data_len);
 void save_page(Page* page);
+long get_file_len(FILE* f);
+int count_pages(char* file_name);
 
 Page* get_page(char* file_name, int page_num) {
     // сначала проверяем кеш
@@ -52,6 +56,9 @@ int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
     if (!f) {
         return ERR_OPEN;
     }
+    if (get_file_len(f) < start_pos) {
+        return ERR_NO_SUCH_PAGE;
+    }
     if (fseek(f, start_pos, SEEK_SET) != 0) {
         return ERR_SEEK;
     }
@@ -72,6 +79,9 @@ int write_page(char* file_name, long start_pos, char data[], size_t data_len) {
     FILE* f = fopen(file_name, "wb");
     if (!f) {
         return ERR_OPEN;
+    }
+    if (get_file_len(f) < start_pos) {
+        return ERR_NO_SUCH_PAGE;
     }
     if (fseek(f, start_pos, SEEK_SET) != 0) {
         return ERR_SEEK;
@@ -96,6 +106,40 @@ void save_page(Page* page) {
 
     int res = write_page(page->file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
-        printf("page_carrier: save_page fail \n");
+        if (res == ERR_NO_SUCH_PAGE) {
+            int pages_counted = count_pages(page->file_name);
+            if (pages_counted < 0) {
+                printf("page_carrier: save_page fail \n");
+                return;
+            }
+
+            page->page_num = pages_counted + 1;
+            return save_page(page);
+        }
     }
+}
+
+long get_file_len(FILE* f) {
+    int fd = fileno(f);
+    struct stat st;
+    if (fstat(fd, &st) != 0) {
+        return -1;
+    }
+
+    return st.st_size;
+}
+
+int count_pages(char* file_name) {
+    FILE* f = fopen(file_name, "rb");
+    if (!f) {
+        return ERR_OPEN;
+    }
+    
+    long file_len = get_file_len(f);
+    if (file_len == -1) {
+        return -1;
+    }
+    fclose(f);
+
+    return (file_len - FILE_HDR_LEN) / PAGE_LEN;
 }
