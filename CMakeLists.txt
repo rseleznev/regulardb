@@ -2,4 +2,4 @@ cmake_minimum_required(VERSION 3.10)
 
 project(RegularDB C)
 
-add_executable(regulardb main.c storage.c)
+add_executable(regulardb main.c page_carrier.c)
