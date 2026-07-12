@@ -14,6 +14,7 @@ typedef enum {
 Page* get_page(char* file_name, int page_num);
 int read_page(char* file_name, long start_pos, char buf[], size_t limit);
 int write_page(char* file_name, long start_pos, char data[], size_t data_len);
+void save_page(Page* page);
 
 Page* get_page(char* file_name, int page_num) {
     // сначала проверяем кеш
@@ -33,13 +34,12 @@ Page* get_page(char* file_name, int page_num) {
 
     int res = read_page(file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
-        if (res == ERR_SEEK || res == ERR_EOF) {
-            res = write_page(file_name, start_pos, page->data, PAGE_LEN);
-            if (res != 0) {
-                return NULL;
-            }   
+        /* Нужно подумать, как поступать в случае, когда указана несуществующая страница.
+        В том числе, когда номер желаемой страницы сильно больше текущей последней страницы */
+        res = write_page(file_name, start_pos, page->data, PAGE_LEN);
+        if (res != 0) {
+            return NULL;
         }
-        return NULL;
     }
 
     return page;
@@ -82,4 +82,18 @@ int write_page(char* file_name, long start_pos, char data[], size_t data_len) {
     fclose(f);
     
     return 0;
+}
+
+void save_page(Page* page) {
+    if (!page->changed) {
+        return;
+    }
+
+    long start_pos;
+    start_pos = page->page_num * PAGE_LEN - PAGE_LEN; // в будущем добавится смещение от заголовка файла
+
+    int res = write_page(page->file_name, start_pos, page->data, PAGE_LEN);
+    if (res != 0) {
+        printf("page_carrier: save_page fail \n");
+    }
 }

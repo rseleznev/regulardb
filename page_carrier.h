@@ -13,5 +13,6 @@ typedef struct Page {
 } Page;
 
 Page* get_page(char* file_name, int page_num);
+void save_page(Page* p);
 
 #endif

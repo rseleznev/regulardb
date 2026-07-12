@@ -1,5 +1,6 @@
 #include "page_carrier.h"
 #include <stdio.h>
+#include <string.h>
 
 int main(void) {
     Page* page = get_page("db/tables/users.rdb", 1);
@@ -12,6 +13,10 @@ int main(void) {
         printf("%c", page->data[i]);
     }
     printf("\n");
+
+    strcpy(page->data, "test value");
+    page->changed = true;
+    save_page(page);
 
     return 0;
 }
