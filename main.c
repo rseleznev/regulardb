@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(void) {
-    Page* page = get_page("db/catalog.rdb", 1);
+    Page* page = get_page("db/tables/users.rdb", 1);
     if (page == NULL) {
         return 1;
     }
