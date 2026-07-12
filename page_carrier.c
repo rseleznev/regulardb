@@ -29,6 +29,7 @@ Page* get_page(char* file_name, int page_num) {
     // иначе читаем с диска
     Page* page = malloc(sizeof(Page));
     if (page == NULL) {
+        printf("page_carrier: get_page mem alloc fail \n");
         return NULL;
     }
     strcpy(page->file_name, file_name);
@@ -54,20 +55,29 @@ Page* get_page(char* file_name, int page_num) {
 int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
     FILE* f = fopen(file_name, "rb");
     if (!f) {
+        printf("page_carrier: read_page open file fail \n");
         return ERR_OPEN;
     }
     if (get_file_len(f) < start_pos) {
+        printf("page_carrier: read_page start pos out of range \n");
+        fclose(f);
         return ERR_NO_SUCH_PAGE;
     }
     if (fseek(f, start_pos, SEEK_SET) != 0) {
+        printf("page_carrier: read_page fseek fail \n");
+        fclose(f);
         return ERR_SEEK;
     }
     if (feof(f)) {
+        printf("page_carrier: read_page EOF fail \n");
+        fclose(f);
         return ERR_EOF;
     }
 
     size_t n = fread(buf, 1, limit, f);
     if (n <= 0) {
+        printf("page_carrier: read_page read fail \n");
+        fclose(f);
         return ERR_READ;
     }
     fclose(f);
@@ -78,17 +88,24 @@ int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
 int write_page(char* file_name, long start_pos, char data[], size_t data_len) {
     FILE* f = fopen(file_name, "wb");
     if (!f) {
+        printf("page_carrier: write_page open file fail \n");
         return ERR_OPEN;
     }
     if (get_file_len(f) < start_pos) {
+        printf("page_carrier: write_page start pos out of range \n");
+        fclose(f);
         return ERR_NO_SUCH_PAGE;
     }
     if (fseek(f, start_pos, SEEK_SET) != 0) {
+        printf("page_carrier: write_page fseek fail \n");
+        fclose(f);
         return ERR_SEEK;
     }
 
     size_t n = fwrite(data, 1, data_len, f);
     if (n != data_len) {
+        printf("page_carrier: write_page write fail \n");
+        fclose(f);
         return ERR_WRITE;
     }
     fclose(f);
@@ -132,11 +149,14 @@ long get_file_len(FILE* f) {
 int count_pages(char* file_name) {
     FILE* f = fopen(file_name, "rb");
     if (!f) {
+        printf("page_carrier: count_pages open file fail \n");
         return ERR_OPEN;
     }
     
     long file_len = get_file_len(f);
     if (file_len == -1) {
+        printf("page_carrier: count_pages file len fail \n");
+        fclose(f);
         return -1;
     }
     fclose(f);
