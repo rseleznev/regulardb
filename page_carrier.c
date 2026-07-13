@@ -17,11 +17,11 @@ typedef enum {
 
 Page* new_page(char* file_name);
 Page* get_page(char* file_name, int page_num);
-int read_page(char* file_name, long start_pos, char buf[], size_t limit);
+int read_page(FILE* f, long start_pos, char buf[], size_t limit);
 int write_page(char* file_name, long start_pos, char data[], size_t data_len);
 void save_page(Page* page);
 long get_file_len(FILE* f);
-int count_pages(char* file_name);
+int count_pages(FILE* f);
 
 /* Логика работы со страницами:
     Если в get_page запрашивается несуществующая страница, вернется ошибка.
@@ -31,20 +31,28 @@ int count_pages(char* file_name);
 */
 
 Page* new_page(char* file_name) {
+    FILE* f = fopen(file_name, "rb");
+    if (!f) {
+        printf("page_carrier: new_page open file fail \n");
+        return NULL;
+    }
+    
     Page* page = malloc(sizeof(Page));
     if (page == NULL) {
         printf("page_carrier: new_page mem alloc fail \n");
         return NULL;
     }
-    strcpy(page->file_name, file_name);
-    page->changed = false;
 
-    int pages_counted = count_pages(file_name);
+    int pages_counted = count_pages(f);
     if (pages_counted < 0) {
         printf("page_carrier: new_page pages count fail \n");
         return NULL;
     }
+    strcpy(page->file_name, file_name);
+    page->changed = false;
     page->page_num = pages_counted + 1;
+
+    fclose(f);
 
     return page;
 }
@@ -54,39 +62,43 @@ Page* get_page(char* file_name, int page_num) {
     // если есть в кеше - отдаем его
 
     // иначе читаем с диска
+    FILE* f = fopen(file_name, "rb");
+    if (!f) {
+        printf("page_carrier: get_page open file fail \n");
+        /* Если страницы нет ни в кеше, ни на диске (в том числе самого файла), ее сначала надо создать через new_page */
+        return NULL;
+    }
+
+    int pages_counted = count_pages(f);
+    if (pages_counted < page_num) {
+        printf("page_carrier: get_page less pages counted then desired \n");
+        return NULL;
+    }
+
     Page* page = malloc(sizeof(Page));
     if (page == NULL) {
         printf("page_carrier: get_page mem alloc fail \n");
         return NULL;
     }
-    strcpy(page->file_name, file_name);
-    page->page_num = page_num;
-    page->changed = false;
 
     long start_pos;
     start_pos = FILE_HDR_LEN + page_num * PAGE_LEN - PAGE_LEN;
 
-    int res = read_page(file_name, start_pos, page->data, PAGE_LEN);
+    int res = read_page(f, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
-        /* Если страницы нет ни в кеше, ни на диске, ее сначала надо создать через new_page */
-        if (res == ERR_NO_SUCH_PAGE) {
-            return NULL;
-        }
-        res = write_page(file_name, start_pos, page->data, PAGE_LEN);
-        if (res != 0) {
-            return NULL;
-        }
+        return NULL;
     }
+
+    strcpy(page->file_name, file_name);
+    page->page_num = page_num;
+    page->changed = false;
+
+    fclose(f);
 
     return page;
 }
 
-int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
-    FILE* f = fopen(file_name, "rb");
-    if (!f) {
-        printf("page_carrier: read_page open file fail \n");
-        return ERR_OPEN;
-    }
+int read_page(FILE* f, long start_pos, char buf[], size_t limit) {
     if (get_file_len(f)-1 < start_pos) {
         printf("page_carrier: read_page start pos out of range \n");
         fclose(f);
@@ -109,7 +121,6 @@ int read_page(char* file_name, long start_pos, char buf[], size_t limit) {
         fclose(f);
         return ERR_READ;
     }
-    fclose(f);
     
     return 0;
 }
@@ -152,16 +163,7 @@ void save_page(Page* page) {
 
     int res = write_page(page->file_name, start_pos, page->data, PAGE_LEN);
     if (res != 0) {
-        if (res == ERR_NO_SUCH_PAGE) {
-            int pages_counted = count_pages(page->file_name);
-            if (pages_counted < 0) {
-                printf("page_carrier: save_page fail \n");
-                return;
-            }
-
-            page->page_num = pages_counted + 1;
-            return save_page(page);
-        }
+        return;
     }
 }
 
@@ -175,20 +177,13 @@ long get_file_len(FILE* f) {
     return st.st_size;
 }
 
-int count_pages(char* file_name) {
-    FILE* f = fopen(file_name, "rb");
-    if (!f) {
-        printf("page_carrier: count_pages open file fail \n");
-        return ERR_OPEN;
-    }
-    
+int count_pages(FILE* f) {
     long file_len = get_file_len(f);
     if (file_len == -1) {
         printf("page_carrier: count_pages file len fail \n");
         fclose(f);
         return -1;
     }
-    fclose(f);
 
     return (file_len - FILE_HDR_LEN) / PAGE_LEN;
 }
