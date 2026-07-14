@@ -14,9 +14,9 @@ typedef struct Cache {
 } Cache;
 
 Cache* new_cache(void);
-void cache_append(char* key, void* data);
-void* cache_get(char* key);
-void cache_delete(char* key);
-void cache_free(void);
+void cache_replace(Cache* cache, char* key, void* data);
+void* cache_get(Cache* cache, char* key);
+void cache_delete(Cache* cache, char* key);
+void cache_free(Cache* cache);
 
 #endif

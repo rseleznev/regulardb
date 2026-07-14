@@ -1,4 +1,5 @@
 #include "page_carrier.h"
+#include "cache.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +24,8 @@ int read_page_from_file(FILE* f, long page_start_pos, char buf[], size_t limit);
 int write_page_to_file(FILE* f, long page_start_pos, char data[], size_t data_len);
 long get_file_len(FILE* f);
 int count_pages(FILE* f);
+
+static Cache* cache;
 
 /* Логика работы со страницами:
 
@@ -70,16 +73,36 @@ Page* new_page(char* file_name) {
 
     fclose(f);
 
-    // сохраняем страницу в кеш
+    if (cache == NULL) {
+        cache = new_cache();
+        if (cache == NULL) {
+            printf("page_carrier: new_page new cache fail \n");
+            return page;
+        }
+    }
+    char* page_cache_key = page->file_name; // + page_num
+    cache_replace(cache, page_cache_key, page);
 
     return page;
 }
 
 Page* get_page(char* file_name, int page_num) {
     // сначала проверяем кеш
-    // если есть в кеше - отдаем его
+    if (cache == NULL) {
+        cache = new_cache();
+        if (cache == NULL) {
+            printf("page_carrier: get_page new cache fail \n");
+            goto from_file; // придумать что-то получше
+        }
+    }
+    char* page_cache_key = file_name; // + page_num
+    Page* page = (Page*)cache_get(cache, page_cache_key);
+    if (page != NULL) {
+        return page;
+    }
 
     // иначе читаем с диска
+from_file:
     FILE* f = fopen(file_name, "r+b");
     if (!f) {
         printf("page_carrier: get_page open file fail \n");
@@ -94,7 +117,7 @@ Page* get_page(char* file_name, int page_num) {
         return NULL;
     }
 
-    Page* page = malloc(sizeof(Page));
+    page = malloc(sizeof(Page));
     if (page == NULL) {
         printf("page_carrier: get_page mem alloc fail \n");
         fclose(f);
@@ -117,13 +140,33 @@ Page* get_page(char* file_name, int page_num) {
 
     fclose(f);
 
-    // сохраняем страницу в кеш
+    if (cache == NULL) {
+        cache = new_cache();
+        if (cache == NULL) {
+            printf("page_carrier: get_page new cache fail \n");
+            return page;
+        }
+    }
+    cache_replace(cache, page_cache_key, page);
 
     return page;
 }
 
 void save_page(Page* page) {
     // сначала проверяем страницу в кеше, если в кеше нет - конец
+    if (cache == NULL) {
+        cache = new_cache();
+        if (cache == NULL) {
+            printf("page_carrier: save_page new cache fail \n");
+            return;
+        }
+    }
+    char* page_cache_key = page->file_name; // + page_num
+    Page* page = (Page*)cache_get(cache, page_cache_key);
+    if (page == NULL) {
+        printf("page_carrier: save_page no such page in cache \n");
+        return;
+    }
     
     if (!page->changed) {
         printf("page_carrier: save_page no changes to save \n");

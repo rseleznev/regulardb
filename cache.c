@@ -2,21 +2,15 @@
 #include "stdlib.h"
 
 Cache* new_cache(void);
-void cache_append(char* key, void* data);
-void* cache_get(char* key);
-void cache_delete(char* key);
-void cache_free(void);
+void cache_replace(Cache* cache, char* key, void* data);
+void* cache_get(Cache* cache, char* key);
+void cache_delete(Cache* cache, char* key);
+void cache_free(Cache* cache);
 
 void free_list_for_idx(int idx);
 
-static Cache* cache;
-
 Cache* new_cache(void) {
-    if (cache != NULL) {
-        return cache;
-    }
-    
-    cache = сalloc(1, sizeof(Cache));
+    Cache* cache = сalloc(1, sizeof(Cache));
     if (cache == NULL) {
         return NULL;
     }
@@ -25,7 +19,7 @@ Cache* new_cache(void) {
     return cache;
 }
 
-void cache_append(char* key, void* data) {
+void cache_replace(Cache* cache, char* key, void* data) {
     // получаем хеш ключа и индекс от него
     int i;
 
@@ -46,7 +40,7 @@ void cache_append(char* key, void* data) {
     cache->records_count++;
 }
 
-void cache_free(void) {
+void cache_free(Cache* cache) {
     if (cache == NULL) {
         return;
     }
