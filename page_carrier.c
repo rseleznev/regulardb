@@ -33,7 +33,7 @@ int count_pages(FILE* f);
 */
 
 Page* new_page(char* file_name) {
-    FILE* f = fopen(file_name, "wb");
+    FILE* f = fopen(file_name, "r+b");
     if (!f) {
         // файл должен быть создан отдельно
         printf("page_carrier: new_page open file fail \n");
@@ -55,7 +55,7 @@ Page* new_page(char* file_name) {
     }
     strcpy(page->file_name, file_name);
     page->changed = false;
-    page->page_num = pages_counted + 1;
+    page->page_num = ++pages_counted;
 
     // заполняем страницу нулями на диске
     char zeros[PAGE_LEN] = {0};
@@ -80,7 +80,7 @@ Page* get_page(char* file_name, int page_num) {
     // если есть в кеше - отдаем его
 
     // иначе читаем с диска
-    FILE* f = fopen(file_name, "rb");
+    FILE* f = fopen(file_name, "r+b");
     if (!f) {
         printf("page_carrier: get_page open file fail \n");
         /* Если страницы нет ни в кеше, ни на диске (в том числе самого файла), ее сначала надо создать через new_page */
@@ -130,7 +130,7 @@ void save_page(Page* page) {
         return;
     }
 
-    FILE* f = fopen(page->file_name, "wb");
+    FILE* f = fopen(page->file_name, "r+b");
     if (!f) {
         printf("page_carrier: save_page open file fail \n");
         return;
