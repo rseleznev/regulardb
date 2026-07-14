@@ -8,6 +8,7 @@ void cache_delete(Cache* cache, char* key);
 void cache_free(Cache* cache);
 
 void free_list_for_idx(int idx);
+CacheRecord* get_record(Cache* cache, char* key);
 
 Cache* new_cache(void) {
     Cache* cache = сalloc(1, sizeof(Cache));
@@ -20,6 +21,12 @@ Cache* new_cache(void) {
 }
 
 void cache_replace(Cache* cache, char* key, void* data) {
+    CacheRecord* old_record = get_record(cache, key);
+    if (old_record != NULL) {
+        old_record->data = data;
+        return;
+    }
+    
     // получаем хеш ключа и индекс от него
     int i;
 
@@ -57,4 +64,17 @@ void cache_free(Cache* cache) {
 
 void free_list_for_idx(int idx) {
     // очистка связного списка для указанного индекса
+}
+
+CacheRecord* get_record(Cache* cache, char* key) {
+    // получаем хеш ключа и индекс от него
+    int i;
+
+    if (cache->records[i]->data == NULL) {
+        return NULL;
+    }
+    if (cache->records[i]->next == NULL) {
+        return cache->records[i];
+    }
+    // ищем в списке
 }
