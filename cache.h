@@ -3,9 +3,11 @@
 
 #define CACHE_LEN 1024
 
+#include <stdbool.h>
+
 typedef struct CacheRecord {
     void* data;
-    CacheRecord* next;
+    struct CacheRecord* next;
 } CacheRecord;
 
 typedef struct Cache {
@@ -15,6 +17,7 @@ typedef struct Cache {
 
 Cache* new_cache(void);
 void cache_replace(Cache* cache, char* key, void* data);
+bool cache_has_key(Cache* cache, char* key);
 void* cache_get(Cache* cache, char* key);
 void cache_delete(Cache* cache, char* key);
 void cache_free(Cache* cache);

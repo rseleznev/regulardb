@@ -10,6 +10,9 @@ typedef struct Page {
     int page_num;
     char data[PAGE_LEN];
     bool changed;
+
+    char page_cache_key[30];
+    bool has_cache_key;
 } Page;
 
 Page* new_page(char* file_name);

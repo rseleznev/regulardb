@@ -3,6 +3,7 @@
 
 Cache* new_cache(void);
 void cache_replace(Cache* cache, char* key, void* data);
+bool cache_has_key(Cache* cache, char* key);
 void* cache_get(Cache* cache, char* key);
 void cache_delete(Cache* cache, char* key);
 void cache_free(Cache* cache);
@@ -11,7 +12,8 @@ void free_list_for_idx(int idx);
 CacheRecord* get_record(Cache* cache, char* key);
 
 Cache* new_cache(void) {
-    Cache* cache = сalloc(1, sizeof(Cache));
+    return NULL;
+    Cache* cache = (Cache*)calloc(1, sizeof(Cache));
     if (cache == NULL) {
         return NULL;
     }
@@ -48,6 +50,18 @@ void cache_replace(Cache* cache, char* key, void* data) {
     cache->records_count++;
 }
 
+bool cache_has_key(Cache* cache, char* key) {
+    return true;
+}
+
+void* cache_get(Cache* cache, char* key) {
+    return NULL;
+}
+
+void cache_delete(Cache* cache, char* key) {
+
+}
+
 void cache_free(Cache* cache) {
     if (cache == NULL) {
         return;
@@ -78,4 +92,6 @@ CacheRecord* get_record(Cache* cache, char* key) {
         return cache->records[i];
     }
     // ищем в списке
+
+    return NULL;
 }

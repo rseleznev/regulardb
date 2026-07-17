@@ -5,13 +5,14 @@
 int create_file(char* file_name);
 
 int main(void) {
-    int res = create_file("db/tables/users.rdb");
-    if (res != 0) {
-        return 1;
-    }
+    // int res = create_file("db/tables/users.rdb");
+    // if (res != 0) {
+    //     return 1;
+    // }
     
-    Page* page = get_page("db/tables/users.rdb", 2);
+    Page* page = get_page("db/tables/users.rdb", 125);
     if (page == NULL) {
+        printf("creating new page... \n");
         page = new_page("db/tables/users.rdb");
         if (page == NULL) {
             return 1;    
@@ -25,11 +26,9 @@ int main(void) {
     }
     printf("\n");
 
-    strcpy(page->data, "page 1 value");
-    page->changed = true;
-    save_page(page);
-
-    /* Разобраться, почему удаляется страница 2, когда записываем страницу 1 */
+    // strcpy(page->data, "page 1 value");
+    // page->changed = true;
+    // save_page(page);
 
     return 0;
 }

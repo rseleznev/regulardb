@@ -25,6 +25,8 @@ int read_page_from_file(FILE* f, long page_start_pos, char buf[], size_t limit);
 int write_page_to_file(FILE* f, long page_start_pos, char data[], size_t data_len);
 long get_file_len(FILE* f);
 int count_pages(FILE* f);
+void build_page_cache_key(char* file_name, int page_num, char* buf);
+void itoa(int n, char* buf);
 
 static Cache* cache;
 
@@ -60,6 +62,7 @@ Page* new_page(char* file_name) {
     strcpy(page->file_name, file_name);
     page->changed = false;
     page->page_num = ++pages_counted;
+    page->has_cache_key = false;
 
     // заполняем страницу нулями и записываем на диск
     char zeros[PAGE_LEN] = {0};
@@ -82,13 +85,17 @@ Page* new_page(char* file_name) {
             return page;
         }
     }
-    char* page_cache_key = page->file_name; // + page_num
-    cache_replace(cache, page_cache_key, page);
+    build_page_cache_key(page->file_name, page->page_num, page->page_cache_key);
+    page->has_cache_key = true;
+    cache_replace(cache, page->page_cache_key, page);
 
     return page;
 }
 
 Page* get_page(char* file_name, int page_num) {
+    char page_cache_key[30];
+    build_page_cache_key(file_name, page_num, page_cache_key);
+    
     // сначала проверяем кеш
     if (cache == NULL) {
         cache = new_cache();
@@ -97,9 +104,15 @@ Page* get_page(char* file_name, int page_num) {
             goto from_file; // придумать что-то получше
         }
     }
-    char* page_cache_key = file_name; // + page_num
+    // char page_cache_key[30];
+    // build_page_cache_key(file_name, page_num, page_cache_key);
+    // printf("page cache key: %s \n", page_cache_key);
     Page* page = (Page*)cache_get(cache, page_cache_key);
     if (page != NULL) {
+        if (!page->has_cache_key) {
+            strcpy(page->page_cache_key, page_cache_key);
+        }
+        
         return page;
     }
 
@@ -139,6 +152,8 @@ from_file:
     strcpy(page->file_name, file_name);
     page->page_num = page_num;
     page->changed = false;
+    strcpy(page->page_cache_key, page_cache_key);
+    page->has_cache_key = true;
 
     fclose(f);
 
@@ -150,12 +165,20 @@ from_file:
             return page;
         }
     }
-    cache_replace(cache, page_cache_key, page);
+    cache_replace(cache, page->page_cache_key, page);
 
     return page;
 }
 
 void save_page(Page* page) {
+    if (page == NULL) {
+        return;
+    }
+    if (!page->changed) {
+        printf("page_carrier: save_page no changes to save \n");
+        return;
+    }
+    
     // сначала проверяем страницу в кеше, если в кеше нет - конец
     if (cache == NULL) {
         cache = new_cache();
@@ -164,15 +187,12 @@ void save_page(Page* page) {
             return;
         }
     }
-    char* page_cache_key = page->file_name; // + page_num
-    Page* page = (Page*)cache_get(cache, page_cache_key);
-    if (page == NULL) {
-        printf("page_carrier: save_page no such page in cache \n");
-        return;
+    if (!page->has_cache_key) {
+        build_page_cache_key(page->file_name, page->page_num, page->page_cache_key);
     }
-    
-    if (!page->changed) {
-        printf("page_carrier: save_page no changes to save \n");
+    bool ok = (Page*)cache_get(cache, page->page_cache_key);
+    if (!ok) {
+        printf("page_carrier: save_page no such page in cache \n");
         return;
     }
 
@@ -195,8 +215,10 @@ void save_page(Page* page) {
 
 void free_page(Page* page) {
     if (cache != NULL) {
-        char* page_cache_key = page->file_name; // + page_num
-        cache_delete(cache, page_cache_key);
+        if (!page->has_cache_key) {
+            build_page_cache_key(page->file_name, page->page_num, page->page_cache_key);
+        }
+        cache_delete(cache, page->page_cache_key);
     }
 
     free(page);
@@ -259,4 +281,16 @@ int count_pages(FILE* f) {
     }
 
     return (file_len - FILE_HDR_LEN) / PAGE_LEN;
+}
+
+void build_page_cache_key(char* file_name, int page_num, char* buf) {
+    strcat(buf, file_name);
+
+    char page_num_str[5];
+    itoa(page_num, page_num_str);
+    strcat(buf, page_num_str);
+}
+
+void itoa(int n, char* buf) {
+    sprintf(buf, "%d", n);
 }
