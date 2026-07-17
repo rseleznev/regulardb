@@ -63,6 +63,8 @@ Page* new_page(char* file_name) {
     page->changed = false;
     page->page_num = ++pages_counted;
     page->has_cache_key = false;
+    char cache_key_zeros[30] = {0};
+    strcpy(page->page_cache_key, cache_key_zeros);
 
     // заполняем страницу нулями и записываем на диск
     char zeros[PAGE_LEN] = {0};
@@ -81,21 +83,19 @@ Page* new_page(char* file_name) {
     if (cache == NULL) {
         cache = new_cache();
         if (cache == NULL) {
-            printf("page_carrier: new_page new cache fail \n");
+            printf("page_carrier: new_page new cache fail. Return page without cache saving \n");
             return page;
         }
     }
     build_page_cache_key(page->file_name, page->page_num, page->page_cache_key);
     page->has_cache_key = true;
     cache_replace(cache, page->page_cache_key, page);
+    printf("page_carrier: new_page saved page in cache with key %s \n", page->page_cache_key);
 
     return page;
 }
 
 Page* get_page(char* file_name, int page_num) {
-    char page_cache_key[30];
-    build_page_cache_key(file_name, page_num, page_cache_key);
-    
     // сначала проверяем кеш
     if (cache == NULL) {
         cache = new_cache();
@@ -104,14 +104,14 @@ Page* get_page(char* file_name, int page_num) {
             goto from_file; // придумать что-то получше
         }
     }
-    // char page_cache_key[30];
-    // build_page_cache_key(file_name, page_num, page_cache_key);
-    // printf("page cache key: %s \n", page_cache_key);
+    char page_cache_key[30] = {0};
+    build_page_cache_key(file_name, page_num, page_cache_key);
     Page* page = (Page*)cache_get(cache, page_cache_key);
     if (page != NULL) {
         if (!page->has_cache_key) {
             strcpy(page->page_cache_key, page_cache_key);
         }
+        printf("page_carrier: get_page got page in cache with key %s \n", page->page_cache_key);
         
         return page;
     }
@@ -166,6 +166,7 @@ from_file:
         }
     }
     cache_replace(cache, page->page_cache_key, page);
+    printf("page_carrier: get_page saved page in cache with key %s \n", page->page_cache_key);
 
     return page;
 }
@@ -190,11 +191,12 @@ void save_page(Page* page) {
     if (!page->has_cache_key) {
         build_page_cache_key(page->file_name, page->page_num, page->page_cache_key);
     }
-    bool ok = (Page*)cache_get(cache, page->page_cache_key);
+    bool ok = cache_has_key(cache, page->page_cache_key);
     if (!ok) {
         printf("page_carrier: save_page no such page in cache \n");
         return;
     }
+    cache_replace(cache, page->page_cache_key, page);
 
     FILE* f = fopen(page->file_name, "r+b");
     if (!f) {
@@ -286,7 +288,7 @@ int count_pages(FILE* f) {
 void build_page_cache_key(char* file_name, int page_num, char* buf) {
     strcat(buf, file_name);
 
-    char page_num_str[5];
+    char page_num_str[5]; // разобраться, как динамически узнавать кол-во цифр в числе
     itoa(page_num, page_num_str);
     strcat(buf, page_num_str);
 }

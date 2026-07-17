@@ -10,7 +10,7 @@ int main(void) {
     //     return 1;
     // }
     
-    Page* page = get_page("db/tables/users.rdb", 125);
+    Page* page = get_page("db/tables/users.rdb", 1);
     if (page == NULL) {
         printf("creating new page... \n");
         page = new_page("db/tables/users.rdb");
@@ -26,9 +26,17 @@ int main(void) {
     }
     printf("\n");
 
-    // strcpy(page->data, "page 1 value");
-    // page->changed = true;
-    // save_page(page);
+    strcpy(page->data, "page 1 refresh value");
+    page->changed = true;
+    save_page(page);
+
+    Page* page2 = get_page("db/tables/users.rdb", 1);
+    int j;
+    printf("From chache: \n");
+    for (j = 0; j < 100; j++) {
+        printf("%c", page2->data[j]);
+    }
+    printf("\n");
 
     return 0;
 }

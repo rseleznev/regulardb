@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 typedef struct CacheRecord {
+    char key[30];
     void* data;
     struct CacheRecord* next;
 } CacheRecord;
