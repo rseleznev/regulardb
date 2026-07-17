@@ -19,6 +19,7 @@ typedef enum {
 Page* new_page(char* file_name);
 Page* get_page(char* file_name, int page_num);
 void save_page(Page* page);
+void free_page(Page* p);
 
 int read_page_from_file(FILE* f, long page_start_pos, char buf[], size_t limit);
 int write_page_to_file(FILE* f, long page_start_pos, char data[], size_t data_len);
@@ -60,7 +61,7 @@ Page* new_page(char* file_name) {
     page->changed = false;
     page->page_num = ++pages_counted;
 
-    // заполняем страницу нулями на диске
+    // заполняем страницу нулями и записываем на диск
     char zeros[PAGE_LEN] = {0};
     long start_pos;
     start_pos = FILE_HDR_LEN + page->page_num * PAGE_LEN - PAGE_LEN;
@@ -73,6 +74,7 @@ Page* new_page(char* file_name) {
 
     fclose(f);
 
+    // сохраняем в кеш
     if (cache == NULL) {
         cache = new_cache();
         if (cache == NULL) {
@@ -140,6 +142,7 @@ from_file:
 
     fclose(f);
 
+    // сохраняем в кеш
     if (cache == NULL) {
         cache = new_cache();
         if (cache == NULL) {
@@ -188,6 +191,15 @@ void save_page(Page* page) {
     }
 
     fclose(f);
+}
+
+void free_page(Page* page) {
+    if (cache != NULL) {
+        char* page_cache_key = page->file_name; // + page_num
+        cache_delete(cache, page_cache_key);
+    }
+
+    free(page);
 }
 
 int read_page_from_file(FILE* f, long page_start_pos, char buf[], size_t limit) {

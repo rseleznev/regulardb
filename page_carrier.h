@@ -15,5 +15,6 @@ typedef struct Page {
 Page* new_page(char* file_name);
 Page* get_page(char* file_name, int page_num);
 void save_page(Page* p);
+void free_page(Page* p);
 
 #endif

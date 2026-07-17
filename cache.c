@@ -15,14 +15,15 @@ Cache* new_cache(void) {
     if (cache == NULL) {
         return NULL;
     }
-    cache->records_count = 0;
 
     return cache;
 }
 
 void cache_replace(Cache* cache, char* key, void* data) {
+    // проверяем, есть ли запись для данного ключа
     CacheRecord* old_record = get_record(cache, key);
     if (old_record != NULL) {
+        // если запись есть, обновляем данные
         old_record->data = data;
         return;
     }
