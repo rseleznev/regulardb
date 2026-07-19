@@ -96,28 +96,31 @@ Page* new_page(char* file_name) {
 }
 
 Page* get_page(char* file_name, int page_num) {
-    // сначала проверяем кеш
+    Page* page;
+    
+    // сначала проверяем в кеше
     if (cache == NULL) {
         cache = new_cache();
         if (cache == NULL) {
             printf("page_carrier: get_page new cache fail \n");
-            goto from_file; // придумать что-то получше
         }
     }
     char page_cache_key[30] = {0};
     build_page_cache_key(file_name, page_num, page_cache_key);
-    Page* page = (Page*)cache_get(cache, page_cache_key);
-    if (page != NULL) {
-        if (!page->has_cache_key) {
-            strcpy(page->page_cache_key, page_cache_key);
+
+    if (cache != NULL) {
+        page = (Page*)cache_get(cache, page_cache_key);
+        if (page != NULL) {
+            if (!page->has_cache_key) {
+                strcpy(page->page_cache_key, page_cache_key);
+            }
+            printf("page_carrier: get_page got page in cache with key %s \n", page->page_cache_key);
+            
+            return page;
         }
-        printf("page_carrier: get_page got page in cache with key %s \n", page->page_cache_key);
-        
-        return page;
     }
 
     // иначе читаем с диска
-from_file:
     FILE* f = fopen(file_name, "r+b");
     if (!f) {
         printf("page_carrier: get_page open file fail \n");
@@ -158,15 +161,10 @@ from_file:
     fclose(f);
 
     // сохраняем в кеш
-    if (cache == NULL) {
-        cache = new_cache();
-        if (cache == NULL) {
-            printf("page_carrier: get_page new cache fail \n");
-            return page;
-        }
+    if (cache != NULL) {
+        cache_replace(cache, page->page_cache_key, page);
+        printf("page_carrier: get_page saved page in cache with key %s \n", page->page_cache_key);    
     }
-    cache_replace(cache, page->page_cache_key, page);
-    printf("page_carrier: get_page saved page in cache with key %s \n", page->page_cache_key);
 
     return page;
 }
