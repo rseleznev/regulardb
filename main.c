@@ -19,7 +19,7 @@ int create_file(char* file_name);
 void init_page_header(Page* page);
 PageHeader* read_page_header(Page* page);
 void print_8_bits(char c);
-void print_64_bits(off_t o);
+void print_64_bits(long n);
 
 int main(void) {
     int res;
@@ -69,7 +69,7 @@ int create_file(char* file_name) {
 
 void init_page_header(Page* page) {
     PageHeader header;
-    header.upper_idx = 0 + sizeof(header);
+    header.upper_idx = sizeof(PageHeader);
     header.lower_idx = PAGE_LEN-1;
 
     int i, shift;
@@ -123,10 +123,10 @@ void print_8_bits(char c) {
     printf("\n");
 }
 
-void print_64_bits(off_t o) {
+void print_64_bits(long n) {
     int shift;
     for (shift = 63; shift >= 0; shift--) {
-        if ((o >> shift) & 1 == 1) {
+        if ((n >> shift) & 1 == 1) {
             printf("1");
         }
         else {
