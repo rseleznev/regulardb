@@ -16,8 +16,8 @@ typedef struct RecordInfo {
 } RecordInfo;
 
 typedef struct Record {
-    void* data;
     int data_len;
+    char data[];
 } Record;
 
 int create_file(char* file_name);
@@ -56,6 +56,15 @@ int main(void) {
     printf("header.lower_idx: %ld \n", hdr->lower_idx);
 
     Record* record = read_first_record(page);
+    if (record == NULL) {
+        return 1;
+    }
+
+    int n;
+    for (n = 0; n < record->data_len; n++) {
+        printf("%c", record->data[n]);
+    }
+    printf("\n");
 
     // char* data = "random test value";
     // res = append_record(data, 17, page);
@@ -207,6 +216,7 @@ Record* read_first_record(Page* page) {
         return NULL;
     }
 
+    // читаем RecordInfo
     int i, shift;
     RecordInfo record_info;
     record_info.data_idx = 0;
@@ -226,11 +236,19 @@ Record* read_first_record(Page* page) {
 
     record_info.status = page->data[i];
 
-    printf("record_info.data_idx: %ld \n", record_info.data_idx);
-    printf("record_info.data_len: %ld \n", record_info.data_len);
-    printf("record_info.status: %c \n", record_info.status);
+    // читаем данные
+    Record* record = malloc(sizeof(Record) + record_info.data_len);
+    if (record == NULL) {
+        return NULL;
+    }
 
-    return NULL;
+    int j;
+    for (j = 0, i = record_info.data_idx; i < record_info.data_idx + record_info.data_len; i++) {
+        record->data[j] = page->data[i];
+    }
+    record->data_len = record_info.data_len;
+
+    return record;
 }
 
 void print_8_bits(char c) {
