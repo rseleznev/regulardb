@@ -5,12 +5,12 @@
 #include <sys/types.h>
 
 typedef struct PageHeader {
-    int upper_idx;
-    int lower_idx;
+    off_t upper_idx;
+    off_t lower_idx;
 } PageHeader;
 
 typedef struct RecordInfo {
-    int end_offset;
+    off_t end_offset;
     size_t data_len;
     char status;
 } RecordInfo;
@@ -18,6 +18,8 @@ typedef struct RecordInfo {
 int create_file(char* file_name);
 void init_page_header(Page* page);
 PageHeader* read_page_header(Page* page);
+void print_8_bits(char c);
+void print_64_bits(off_t o);
 
 int main(void) {
     int res;
@@ -40,8 +42,8 @@ int main(void) {
     if (hdr == NULL) {
         return 1;
     }
-    printf("header.upper: %d \n", hdr->upper_idx);
-    printf("header.lower: %d \n", hdr->lower_idx);
+    printf("header.upper: %ld \n", hdr->upper_idx);
+    printf("header.lower: %ld \n", hdr->lower_idx);
 
     // init_page_header(page);
     // page->changed = true;
@@ -67,29 +69,45 @@ int create_file(char* file_name) {
 
 void init_page_header(Page* page) {
     PageHeader header;
-    header.upper_idx = 0 + sizeof(PageHeader);
+    header.upper_idx = 0 + sizeof(header);
     header.lower_idx = PAGE_LEN-1;
 
-    char upper1, upper2, upper3, upper4;
-    char lower1, lower2, lower3, lower4;
+    char upper1, upper2, upper3, upper4, upper5, upper6, upper7, upper8;
+    char lower1, lower2, lower3, lower4, lower5, lower6, lower7, lower8;
 
     upper1 = (char)header.upper_idx;
     upper2 = (char)(header.upper_idx >> 8);
     upper3 = (char)(header.upper_idx >> 16);
     upper4 = (char)(header.upper_idx >> 24);
+    upper5 = (char)(header.upper_idx >> 32);
+    upper6 = (char)(header.upper_idx >> 40);
+    upper7 = (char)(header.upper_idx >> 48);
+    upper8 = (char)(header.upper_idx >> 56);
     page->data[0] = upper1;
     page->data[1] = upper2;
     page->data[2] = upper3;
     page->data[3] = upper4;
+    page->data[4] = upper5;
+    page->data[5] = upper6;
+    page->data[6] = upper7;
+    page->data[7] = upper8;
 
     lower1 = (char)header.lower_idx;
     lower2 = (char)(header.lower_idx >> 8);
     lower3 = (char)(header.lower_idx >> 16);
     lower4 = (char)(header.lower_idx >> 24);
-    page->data[4] = lower1;
-    page->data[5] = lower2;
-    page->data[6] = lower3;
-    page->data[7] = lower4;
+    lower5 = (char)(header.lower_idx >> 32);
+    lower6 = (char)(header.lower_idx >> 40);
+    lower7 = (char)(header.lower_idx >> 48);
+    lower8 = (char)(header.lower_idx >> 56);
+    page->data[8] = lower1;
+    page->data[9] = lower2;
+    page->data[10] = lower3;
+    page->data[11] = lower4;
+    page->data[12] = lower5;
+    page->data[13] = lower6;
+    page->data[14] = lower7;
+    page->data[15] = lower8;
 }
 
 PageHeader* read_page_header(Page* page) {
@@ -98,8 +116,40 @@ PageHeader* read_page_header(Page* page) {
         return NULL;
     }
 
-    header->upper_idx = page->data[0] | page->data[1] << 8 | page->data[2] << 16 | page->data[3] << 24;
-    header->lower_idx = page->data[4] | page->data[5] << 8 | page->data[6] << 16 | page->data[7] << 24;
+    header->upper_idx = (off_t)(unsigned char)page->data[0] | (off_t)(unsigned char)page->data[1] << 8 |
+        (off_t)(unsigned char)page->data[2] << 16 | (off_t)(unsigned char)page->data[3] << 24 |
+        (off_t)(unsigned char)page->data[4] << 32 | (off_t)(unsigned char)page->data[5] << 40 |
+        (off_t)(unsigned char)page->data[6] << 48 | (off_t)(unsigned char)page->data[7] << 56;
+    header->lower_idx = (off_t)(unsigned char)page->data[8] | (off_t)(unsigned char)page->data[9] << 8 |
+        (off_t)(unsigned char)page->data[10] << 16 | (off_t)(unsigned char)page->data[11] << 24 |
+        (off_t)(unsigned char)page->data[12] << 32 | (off_t)(unsigned char)page->data[13] << 40 |
+        (off_t)(unsigned char)page->data[14] << 48 | (off_t)(unsigned char)page->data[15] << 56;
 
     return header;
+}
+
+void print_8_bits(char c) {
+    int shift;
+    for (shift = 7; shift >= 0; shift--) {
+        if ((c >> shift) & 1 == 1) {
+            printf("1");
+        }
+        else {
+            printf("0");
+        }
+    }
+    printf("\n");
+}
+
+void print_64_bits(off_t o) {
+    int shift;
+    for (shift = 63; shift >= 0; shift--) {
+        if ((o >> shift) & 1 == 1) {
+            printf("1");
+        }
+        else {
+            printf("0");
+        }
+    }
+    printf("\n");
 }
