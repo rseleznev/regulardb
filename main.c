@@ -15,12 +15,18 @@ typedef struct RecordInfo {
     char status;
 } RecordInfo;
 
+typedef struct Record {
+    void* data;
+    int data_len;
+} Record;
+
 int create_file(char* file_name);
 void init_page_header(Page* page);
 PageHeader* read_page_header(Page* page);
 void update_page_header(Page* page, PageHeader* header);
 
 int append_record(char* data, int len, Page* page);
+Record* read_first_record(Page* page);
 
 void print_8_bits(char c);
 void print_64_bits(long n);
@@ -48,6 +54,8 @@ int main(void) {
     }
     printf("header.upper_idx: %ld \n", hdr->upper_idx);
     printf("header.lower_idx: %ld \n", hdr->lower_idx);
+
+    Record* record = read_first_record(page);
 
     // char* data = "random test value";
     // res = append_record(data, 17, page);
@@ -192,6 +200,37 @@ int append_record(char* data, int len, Page* page) {
     update_page_header(page, hdr);
 
     return 0;
+}
+
+Record* read_first_record(Page* page) {
+    if (page == NULL) {
+        return NULL;
+    }
+
+    int i, shift;
+    RecordInfo record_info;
+    record_info.data_idx = 0;
+    record_info.data_len = 0;
+
+    shift = 0;
+    for (i = sizeof(PageHeader); i < sizeof(PageHeader) + sizeof(record_info.data_idx); i++) {
+        record_info.data_idx |= (off_t)(unsigned char)page->data[i] << shift;
+        shift += 8;
+    }
+
+    shift = 0;
+    for (; i < sizeof(PageHeader) + sizeof(record_info.data_idx) + sizeof(record_info.data_len); i++) {
+        record_info.data_len |= (size_t)(unsigned char)page->data[i] << shift;
+        shift += 8;
+    }
+
+    record_info.status = page->data[i];
+
+    printf("record_info.data_idx: %ld \n", record_info.data_idx);
+    printf("record_info.data_len: %ld \n", record_info.data_len);
+    printf("record_info.status: %c \n", record_info.status);
+
+    return NULL;
 }
 
 void print_8_bits(char c) {
