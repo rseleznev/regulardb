@@ -72,42 +72,19 @@ void init_page_header(Page* page) {
     header.upper_idx = 0 + sizeof(header);
     header.lower_idx = PAGE_LEN-1;
 
-    char upper1, upper2, upper3, upper4, upper5, upper6, upper7, upper8;
-    char lower1, lower2, lower3, lower4, lower5, lower6, lower7, lower8;
+    int i, shift;
 
-    upper1 = (char)header.upper_idx;
-    upper2 = (char)(header.upper_idx >> 8);
-    upper3 = (char)(header.upper_idx >> 16);
-    upper4 = (char)(header.upper_idx >> 24);
-    upper5 = (char)(header.upper_idx >> 32);
-    upper6 = (char)(header.upper_idx >> 40);
-    upper7 = (char)(header.upper_idx >> 48);
-    upper8 = (char)(header.upper_idx >> 56);
-    page->data[0] = upper1;
-    page->data[1] = upper2;
-    page->data[2] = upper3;
-    page->data[3] = upper4;
-    page->data[4] = upper5;
-    page->data[5] = upper6;
-    page->data[6] = upper7;
-    page->data[7] = upper8;
+    shift = 0;
+    for (i = 0; i < sizeof(header.upper_idx); i++) {
+        page->data[i] = (char)(header.upper_idx >> shift);
+        shift += 8;
+    }
 
-    lower1 = (char)header.lower_idx;
-    lower2 = (char)(header.lower_idx >> 8);
-    lower3 = (char)(header.lower_idx >> 16);
-    lower4 = (char)(header.lower_idx >> 24);
-    lower5 = (char)(header.lower_idx >> 32);
-    lower6 = (char)(header.lower_idx >> 40);
-    lower7 = (char)(header.lower_idx >> 48);
-    lower8 = (char)(header.lower_idx >> 56);
-    page->data[8] = lower1;
-    page->data[9] = lower2;
-    page->data[10] = lower3;
-    page->data[11] = lower4;
-    page->data[12] = lower5;
-    page->data[13] = lower6;
-    page->data[14] = lower7;
-    page->data[15] = lower8;
+    shift = 0;
+    for (; i < sizeof(header); i++) {
+        page->data[i] = (char)(header.lower_idx >> shift);
+        shift += 8;
+    }
 }
 
 PageHeader* read_page_header(Page* page) {
