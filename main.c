@@ -81,7 +81,7 @@ void init_page_header(Page* page) {
     }
 
     shift = 0;
-    for (; i < sizeof(header); i++) {
+    for (; i < sizeof(PageHeader); i++) {
         page->data[i] = (char)(header.lower_idx >> shift);
         shift += 8;
     }
@@ -93,14 +93,19 @@ PageHeader* read_page_header(Page* page) {
         return NULL;
     }
 
-    header->upper_idx = (off_t)(unsigned char)page->data[0] | (off_t)(unsigned char)page->data[1] << 8 |
-        (off_t)(unsigned char)page->data[2] << 16 | (off_t)(unsigned char)page->data[3] << 24 |
-        (off_t)(unsigned char)page->data[4] << 32 | (off_t)(unsigned char)page->data[5] << 40 |
-        (off_t)(unsigned char)page->data[6] << 48 | (off_t)(unsigned char)page->data[7] << 56;
-    header->lower_idx = (off_t)(unsigned char)page->data[8] | (off_t)(unsigned char)page->data[9] << 8 |
-        (off_t)(unsigned char)page->data[10] << 16 | (off_t)(unsigned char)page->data[11] << 24 |
-        (off_t)(unsigned char)page->data[12] << 32 | (off_t)(unsigned char)page->data[13] << 40 |
-        (off_t)(unsigned char)page->data[14] << 48 | (off_t)(unsigned char)page->data[15] << 56;
+    int i, shift;
+
+    shift = 0;
+    for (i = 0; i < sizeof(header->upper_idx); i++) {
+        header->upper_idx |= (off_t)(unsigned char)page->data[i] << shift;
+        shift += 8;
+    }
+
+    shift = 0;
+    for (; i < sizeof(PageHeader); i++) {
+        header->lower_idx |= (off_t)(unsigned char)page->data[i] << shift;
+        shift += 8;
+    }
 
     return header;
 }
